@@ -5,6 +5,9 @@
 #include <map> // multimap (ordered map allowing duplicate keys)
 #include <fstream> // ifstream.good()
 
+#include <iostream>
+using namespace std;
+
 #ifdef _OPENMP
     #include <omp.h>
 #endif // _OPENMP
@@ -58,7 +61,6 @@ bool FffPolygonGenerator::generateAreas(SliceDataStorage& storage, MeshGroup* me
     {
         return false;
     }
-
     slices2polygons(storage, timeKeeper);
 
     return true;
@@ -95,6 +97,7 @@ bool FffPolygonGenerator::sliceModel(MeshGroup* meshgroup, TimeKeeper& timeKeepe
 
     const Settings& mesh_group_settings = Application::getInstance().current_slice->scene.current_mesh_group->settings;
 
+    cout << "Mesh Group Settings: [" << mesh_group_settings.getAllSettingsString() << "]" << endl;
     // regular layers
     int slice_layer_count = 0; //Use signed int because we need to subtract the initial layer in a calculation temporarily.
 
@@ -154,6 +157,7 @@ bool FffPolygonGenerator::sliceModel(MeshGroup* meshgroup, TimeKeeper& timeKeepe
         Mesh& mesh = meshgroup->meshes[mesh_idx];
         Slicer* slicer = new Slicer(&mesh, layer_thickness, slice_layer_count, use_variable_layer_heights, adaptive_layer_height_values);
 
+        cout << "adding one more slicer" << endl;
         slicerList.push_back(slicer);
 
         /*
@@ -179,6 +183,7 @@ bool FffPolygonGenerator::sliceModel(MeshGroup* meshgroup, TimeKeeper& timeKeepe
         Mesh& mesh = scene.current_mesh_group->meshes[mesh_idx];
         if (mesh.settings.get<bool>("conical_overhang_enabled") && !mesh.settings.get<bool>("anti_overhang_mesh"))
         {
+            cout << "applying conical overhang on mesh " << mesh_idx << endl;
             ConicalOverhang::apply(slicerList[mesh_idx], mesh);
         }
     }
@@ -209,6 +214,7 @@ bool FffPolygonGenerator::sliceModel(MeshGroup* meshgroup, TimeKeeper& timeKeepe
     storage.meshes.reserve(slicerList.size()); // causes there to be no resize in meshes so that the pointers in sliceMeshStorage._config to retraction_config don't get invalidated.
     for (unsigned int meshIdx = 0; meshIdx < slicerList.size(); meshIdx++)
     {
+        cout << "working on layer number " << meshIdx << endl;
         Slicer* slicer = slicerList[meshIdx];
         Mesh& mesh = scene.current_mesh_group->meshes[meshIdx];
 
@@ -239,6 +245,7 @@ bool FffPolygonGenerator::sliceModel(MeshGroup* meshgroup, TimeKeeper& timeKeepe
         for (unsigned int layer_nr = 0; layer_nr < meshStorage.layers.size(); layer_nr++)
         {
             SliceLayer& layer = meshStorage.layers[layer_nr];
+            cout << "Working on layer " << layer_nr << " with " << layer.parts.size() << " parts." << endl;
 
             if (use_variable_layer_heights)
             {
@@ -284,6 +291,7 @@ bool FffPolygonGenerator::sliceModel(MeshGroup* meshgroup, TimeKeeper& timeKeepe
 
 void FffPolygonGenerator::slices2polygons(SliceDataStorage& storage, TimeKeeper& time_keeper)
 {
+    cout << "slices2polygons with " << storage.meshes.size() << " meshes." << endl;
     // compute layer count and remove first empty layers
     // there is no separate progress stage for removeEmptyFisrtLayer (TODO)
     unsigned int slice_layer_count = 0;
@@ -292,8 +300,10 @@ void FffPolygonGenerator::slices2polygons(SliceDataStorage& storage, TimeKeeper&
         if (!mesh.settings.get<bool>("infill_mesh") && !mesh.settings.get<bool>("anti_overhang_mesh"))
         {
             slice_layer_count = std::max<unsigned int>(slice_layer_count, mesh.layers.size());
+            cout << "this mesh has " << mesh.layers.size() << " layers" << endl;
         }
     }
+    cout << "the maximum number of layers is" << slice_layer_count << endl;
 
     // handle meshes
     std::vector<double> mesh_timings;
@@ -333,7 +343,7 @@ void FffPolygonGenerator::slices2polygons(SliceDataStorage& storage, TimeKeeper&
 
     log("Layer count: %i\n", storage.print_layer_count);
 
-    //layerparts2HTML(storage, "output/output.html");
+    layerparts2HTML(storage, "/root/svgs");
 
     Progress::messageProgressStage(Progress::Stage::SUPPORT, &time_keeper);
 
