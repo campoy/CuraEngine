@@ -183,30 +183,16 @@ void layerparts2HTML(SliceDataStorage& storage, const char* dir)
             unique_ptr<SVG> svg(new SVG(path, aabb));
             nextColorIdx=0;
             
+            // Generate an infill pattern
+            svg->printf("<pattern id=\"infill\" patternUnits=\"userSpaceOnUse\" width=\"4\" height=\"4\">");
+            svg->printf("<path d=\"M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2\" style=\"stroke:black; stroke-width:1\" />");
+            svg->printf("</pattern>");
+            
             for(unsigned int part_idx = layer.parts.size(); part_idx > 0; part_idx--)
             {
                 SliceLayerPart& part = layer.parts[part_idx-1];
-                // for (unsigned int skin_idx = 0; skin_idx < part.skin_parts.size(); skin_idx++)
-                // {
-                //     SkinPart& skin = part.skin_parts[skin_idx];
-                //     cout << "skin part index " << skin_idx << endl;
-                // }
-
-                cout << "HELLO!!!!!!!" << endl;
-
-                svg->writeComment("part.outline");
                 svg->writeAreas(part.outline, colors[nextColorIdx++]);                
-                svg->writeComment("part.infill_area");
-                svg->writeAreas(part.infill_area, colors[nextColorIdx++]);
-                svg->writeComment("part.print_outline");
-                svg->writeAreas(part.print_outline, colors[nextColorIdx++]);
-                svg->writeComment("part.getOwnInfillArea");
-                svg->writeAreas(part.getOwnInfillArea(), colors[nextColorIdx++]);                
-                for (unsigned int i = 0; i < part.spaghetti_infill_volumes.size(); i++)
-                {
-                    svg->writeComment("part.spaghetti_infill_volumes");
-                    svg->writeAreas(part.spaghetti_infill_volumes[i].first, colors[nextColorIdx++]);
-                }
+                svg->writeAreas(part.infill_area, "url(#infill)");
             }
         }
     }

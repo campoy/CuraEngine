@@ -133,9 +133,35 @@ void SVG::writeComment(std::string comment)
     fprintf(out, "<!-- %s -->\n", comment.c_str());
 }
 
-void SVG::writeAreas(const Polygons& polygons, ColorObject color, ColorObject outline_color, float stroke_width) 
-{
+void SVG::writeAreas(const Polygons& polygons, std::string color, std::string outline_color, float stroke_width) {
     auto parts = polygons.splitIntoParts();
+    
+    mask_nr++;
+
+    // generate mask
+    fprintf(out, "<defs>\n");
+    fprintf(out, "<mask id=\"mask-%d\">\n", mask_nr);
+    fprintf(out, "<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n");
+
+    for (auto part_it = parts.rbegin(); part_it != parts.rend(); ++part_it)
+    {
+        PolygonsPart& parts = *part_it;
+        for (unsigned int j = 1; j < parts.size(); j++)
+        {
+            fprintf(out, "<polygon points=\"");
+            for (Point& p : parts[j])
+            {
+                FPoint3 fp = transformF(p);
+                fprintf(out, "%f,%f ", fp.x, fp.y);
+            }
+            fprintf(out, "\" style=\"fill:black\" />\n", outline_color.c_str(), stroke_width);
+        }
+    }
+
+    fprintf(out, "</mask>\n");
+    fprintf(out, "</defs>\n");
+
+    // generate shape and holes (just for the outline stroke)
     for (auto part_it = parts.rbegin(); part_it != parts.rend(); ++part_it)
     {
         PolygonsPart& parts = *part_it;
@@ -148,11 +174,16 @@ void SVG::writeAreas(const Polygons& polygons, ColorObject color, ColorObject ou
                 fprintf(out, "%f,%f ", fp.x, fp.y);
             }
             if (j == 0)
-                fprintf(out, "\" style=\"fill:%s;stroke:%s;stroke-width:%f\" />\n", toString(color).c_str(), toString(outline_color).c_str(), stroke_width);
+                fprintf(out, "\" style=\"fill:%s;stroke:%s;stroke-width:%f\" mask=\"url(#mask-%d)\"/>\n", color.c_str(), outline_color.c_str(), stroke_width, mask_nr);
             else
-                fprintf(out, "\" style=\"fill:white;stroke:%s;stroke-width:%f\" />\n", toString(outline_color).c_str(), stroke_width);
+                fprintf(out, "\" style=\"fill:none;stroke:%s;stroke-width:%f\" />\n", outline_color.c_str(), stroke_width);
         }
     }
+}
+
+void SVG::writeAreas(const Polygons& polygons, ColorObject color, ColorObject outline_color, float stroke_width) 
+{
+    writeAreas(polygons, toString(color), toString(outline_color), stroke_width);
 }
 
 void SVG::writeAreas(ConstPolygonRef polygon, ColorObject color, ColorObject outline_color, float stroke_width)

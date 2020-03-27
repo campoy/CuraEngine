@@ -60,6 +60,7 @@ private:
     const double scale;
     ColorObject background;
     size_t layer_nr = 1;
+    int mask_nr = 0;
 
     bool output_is_html;
 
@@ -88,6 +89,8 @@ public:
     FPoint3 transformF(const Point& p);
 
     void writeComment(std::string comment);
+
+    void writeAreas(const Polygons& polygons, std::string color, std::string outline_color = "black", float stroke_width = 1);
 
     void writeAreas(const Polygons& polygons, ColorObject color = Color::GRAY, ColorObject outline_color = Color::BLACK, float stroke_width = 1);
 
