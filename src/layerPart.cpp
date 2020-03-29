@@ -149,15 +149,33 @@ void createLayerParts(SliceMeshStorage& mesh, Slicer* slicer)
 }
 
 int nextColorIdx = 0;
-const int numColors = 7;
-const SVG::Color colors[numColors] = {
-    SVG::Color::GRAY,
-    SVG::Color::RED,
-    SVG::Color::BLUE,
-    SVG::Color::GREEN,
-    SVG::Color::ORANGE,
-    SVG::Color::MAGENTA,
-    SVG::Color::YELLOW,
+const int numColors = 25;
+const string colors[numColors] = {
+	"rgb(255, 0, 0)",
+	"rgb(255, 255, 0)",
+	"rgb(0, 255, 0)",
+	"rgb(0, 255, 255)",
+	"rgb(0, 0, 255)",
+	"rgb(255, 0, 255)",
+	"rgb(255, 0, 0",
+	"rgb(255, 64, 0)",
+	"rgb(191, 255, 0)",
+	"rgb(0, 255, 64)",
+	"rgb(0, 191, 255)",
+	"rgb(64, 0, 255)",
+	"rgb(255, 0, 191)",
+	"rgb(255, 128, 0)",
+	"rgb(128, 255, 0)",
+	"rgb(0, 255, 128)",
+	"rgb(0, 128, 255)",
+	"rgb(128, 0, 255)",
+	"rgb(255, 0, 128)",
+	"rgb(255, 191, 0)",
+	"rgb(64, 255, 0)",
+	"rgb(0, 255, 191)",
+	"rgb(0, 64, 255)",
+	"rgb(191, 0, 255)",
+	"rgb(255, 0, 64)"
 };
     
 void layerparts2HTML(SliceDataStorage& storage, const char* dir)

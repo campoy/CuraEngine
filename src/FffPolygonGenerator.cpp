@@ -343,6 +343,8 @@ void FffPolygonGenerator::slices2polygons(SliceDataStorage& storage, TimeKeeper&
 
     log("Layer count: %i\n", storage.print_layer_count);
 
+    splitIntoConcentricalParts(storage);
+
     layerparts2HTML(storage, "/root/svgs");
 
     Progress::messageProgressStage(Progress::Stage::SUPPORT, &time_keeper);
@@ -875,6 +877,64 @@ void FffPolygonGenerator::removeEmptyFirstLayers(SliceDataStorage& storage, size
         storage.support.layer_nr_max_filled_layer -= n_empty_first_layers;
         std::vector<SupportLayer>& support_layers = storage.support.supportLayers;
         support_layers.erase(support_layers.begin(), support_layers.begin() + n_empty_first_layers);
+    }
+}
+
+void FffPolygonGenerator::splitIntoConcentricalParts(SliceDataStorage& storage)
+{
+    cout << "storage has " << storage.meshes.size() << " meshes" << endl;
+    for (SliceMeshStorage& mesh : storage.meshes)
+    {
+        int layerNr = 0;
+        for (SliceLayer& layer : mesh.layers)
+        {
+            cout << "layer " << layerNr << " has " << layer.parts.size() << " parts" << endl;
+            int partNr = 0;
+            std::vector<SliceLayerPart> newParts;
+            for (SliceLayerPart& part : layer.parts)
+            {
+                cout << "layer " << layerNr << " part " << partNr << endl;
+
+                cout << "outline size:" << part.outline.size() << endl;
+                cout << "print_outline size:" << part.print_outline.size() << endl;
+                cout << "infill_area size:" << part.infill_area.size() << endl;
+                cout << "infill_area_own size:" << bool(part.infill_area_own) << endl;
+                cout << "infill_area_per_combine_per_density size:" << part.infill_area_per_combine_per_density.size() << endl;
+                cout << "getOwnInfillArea size:" << part.getOwnInfillArea().size() << endl;
+                cout << "spaghetti_infill_volumes size:" << part.spaghetti_infill_volumes.size() << endl;
+                cout << "insets size:" << part.insets.size() << endl;
+                cout << "perimeter_gaps size:" << part.perimeter_gaps.size() << endl;
+                cout << "outline_gaps size:" << part.outline_gaps.size() << endl;
+                cout << "skin_parts size:" << part.skin_parts.size() << endl;
+
+                if (!part.infill_area.empty())
+                {
+                    cout << "dividing outline into walls and infill" << endl;
+                    Polygons diff = part.outline.difference(part.infill_area);
+                    for (PolygonsPart part : diff.splitIntoParts())
+                    {
+                        SliceLayerPart slicePart;
+                        slicePart.outline = part;
+                        newParts.push_back(slicePart);
+                    }
+
+                    vector<PolygonsPart> infills = part.infill_area.splitIntoParts();
+                    cout << "infill divided into " << infills.size() << " parts." << endl;
+                    for (PolygonsPart part : infills)
+                    {
+                        SliceLayerPart slicePart;
+                        slicePart.outline = part;
+                        slicePart.infill_area = part;
+                        newParts.push_back(slicePart);
+                    }
+                    continue;
+                }
+                newParts.push_back(part);
+                partNr++;
+            }
+            layer.parts = newParts;
+            layerNr++;
+        }
     }
 }
 

@@ -134,6 +134,13 @@ private:
     void removeEmptyFirstLayers(SliceDataStorage& storage, size_t& total_layers);
 
     /*!
+     * \brief Split all slice parts into concentrical parts, initially by kind and width.
+     * 
+     * \param[in, out] storage Stores all layers.
+     */
+    void splitIntoConcentricalParts(SliceDataStorage& storage);
+
+    /*!
      * Set \ref SliceDataStorage::max_print_height_per_extruder and \ref SliceDataStorage::max_print_height_order and \ref SliceDataStorage::max_print_height_second_to_last_extruder
      * 
      * \param[in,out] storage Where to retrieve mesh and support etc settings from and where the print height statistics are saved.
